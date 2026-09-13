@@ -76,18 +76,19 @@ Responda APENAS com um objeto JSON válido, sem markdown, no formato exato:
 }
 
 async function rewriteAsHuman(text){
-  const systemPrompt = `Você é um assistente usado por professores para fins DIDÁTICOS: reescrever um texto de forma que apresente marcas típicas de escrita humana genuína, para mostrar aos alunos como seria um texto mais autêntico.
+  const systemPrompt = `Você é um assistente usado por professores para fins DIDÁTICOS. Seu objetivo é reescrever um texto gerado por IA para que ele passe em detectores anti-IA (como Turnitin, GPTZero, Copyleaks), simulando como um humano faria isso, MAS MANTENDO O TOM ORIGINAL (se for acadêmico, mantenha acadêmico; se for redação, mantenha redação).
 
-Seu objetivo é reescrever o texto aplicando estas técnicas:
-1. VARIAÇÃO DE TAMANHO DE FRASES: alterne entre frases curtas, médias e longas. Não deixe todas as frases com tamanho parecido.
-2. VOZ PESSOAL: adicione expressões de opinião genuína ("eu acho que", "na minha visão", "me parece que"), digressões curtas, hesitações naturais.
-3. IMPERFEIÇÕES GENUÍNAS: inclua algumas repetições leves de palavra, construções menos formais, conectivos simples ("mas", "e aí", "por isso").
-4. VOCABULÁRIO ACESSÍVEL: substitua termos excessivamente formais ou raros por sinônimos mais comuns e naturais para o nível provável do texto.
-5. REFERÊNCIAS CONCRETAS: onde o texto for genérico demais, torne mais específico e situado.
-6. RITMO IRREGULAR: quebre a uniformidade — use às vezes uma frase curta, ou um parágrafo bem curto logo após um longo.
+Ferramentas anti-IA não procuram por gírias ou erros. Elas procuram por baixa "Perplexidade" (palavras muito previsíveis) e baixa "Explosividade/Burstiness" (frases sempre do mesmo tamanho e estrutura). 
 
-Mantenha o CONTEÚDO e as IDEIAS principais do texto original. Não invente informações novas. Apenas reescreva o estilo.
-Responda APENAS com o texto reescrito, sem explicações, sem cabeçalhos, sem aspas envolvendo o texto.`;
+Para humanizar o texto de forma inteligente, aplique estas técnicas:
+1. ALTA EXPLOSIVIDADE (BURSTINESS): Varie drasticamente o tamanho das frases. Escreva uma frase longa e complexa, cheia de vírgulas. Logo em seguida, escreva uma frase bem curta e direta. Quebre a simetria robótica dos parágrafos.
+2. ALTA PERPLEXIDADE: Evite a palavra mais óbvia. Mude a ordem sintática (em vez de Sujeito-Verbo-Objeto, use inversões). 
+3. ELIMINE CLICHÊS DE IA: Remova completamente palavras de transição robóticas como "Além disso", "É importante notar", "Portanto", "Em conclusão", "Em suma", "No cenário atual". Faça as transições pelo próprio fluxo da ideia.
+4. MANTENHA O GÊNERO TEXTUAL: Não force "Eu acho" ou informalidade se o texto for um TCC, artigo científico ou redação formal. A humanização deve ser estrutural e de vocabulário, não de perda de formalidade.
+5. COESÃO ORGÂNICA: Humanos às vezes conectam ideias com dois pontos, ponto e vírgula, ou simplesmente começam a frase de forma abrupta. 
+
+Mantenha o CONTEÚDO, DADOS e CITAÇÕES originais intactos. Apenas altere a mecânica da escrita para torná-la indetectável e genuinamente humana.
+Responda APENAS com o texto reescrito, sem explicações.`;
 
   const response = await fetch("/api/chat", {
     method: "POST",
