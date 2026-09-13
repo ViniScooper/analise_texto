@@ -75,20 +75,34 @@ Responda APENAS com um objeto JSON válido, sem markdown, no formato exato:
   return callClaude(systemPrompt, `TEXTO EM AVALIAÇÃO:\n"""${text}"""\n\nTEXTO DE REFERÊNCIA (autoria confirmada):\n"""${reference}"""`, 700);
 }
 
-async function rewriteAsHuman(text){
-  const systemPrompt = `Você é um assistente usado por professores para fins DIDÁTICOS. Seu objetivo é reescrever um texto gerado por IA para que ele passe em detectores anti-IA (como Turnitin, GPTZero, Copyleaks), simulando como um humano faria isso, MAS MANTENDO O TOM ORIGINAL (se for acadêmico, mantenha acadêmico; se for redação, mantenha redação).
+async function rewriteAsHuman(text, level = 'extremo'){
+  let rules = '';
 
-Ferramentas anti-IA não procuram por gírias ou erros. Elas procuram por baixa "Perplexidade" (palavras muito previsíveis) e baixa "Explosividade/Burstiness" (frases sempre do mesmo tamanho e estrutura). 
+  if (level === 'leve') {
+    rules = `1. VARIAÇÃO LEVE: Alterne sutilmente o tamanho das frases.
+2. REMOÇÃO DE CLICHÊS ROBÓTICOS: Remova inícios de frase óbvios de IA como "Em conclusão", "É crucial notar", "Além disso". Use o fluxo lógico da frase.
+3. TOM: Mantenha o texto limpo, formal e super bem estruturado, como uma redação ou artigo acadêmico excelente. Não tente forçar informalidade.`;
+  } else if (level === 'moderado') {
+    rules = `1. EXPLOSIVIDADE (BURSTINESS): Varie consideravelmente o tamanho das frases. Intercale frases longas com curtas.
+2. PERPLEXIDADE: Evite as palavras estatisticamente mais óbvias. Substitua vocabulário padrão da IA por sinônimos adequados, mas sem soar rebuscado demais.
+3. TRANSIÇÕES ORGÂNICAS: Conecte ideias com a própria narrativa, abandonando transições clássicas (Ademais, Em suma).
+4. ESTRUTURA: Mantenha a formalidade, mas adicione um ritmo genuinamente humano.`;
+  } else {
+    rules = `1. QUEBRA DE PARALELISMO SINTÁTICO: IAs amam estruturas simétricas ("para melhorar a saúde e para aumentar a autoestima"). Quebre isso sempre. Exemplo: mude para "além de uma melhora clara na saúde, nota-se que a autoestima acaba subindo junto".
+2. EXPLOSIVIDADE CAÓTICA (BURSTINESS): Force um ritmo irregular ao extremo. Faça uma frase minúscula, de 3 a 5 palavras. A seguinte deve ser imensa, com 40 palavras, contendo digressões ou cláusulas subordinadas.
+3. PERPLEXIDADE MÁXIMA E ANCORAGEM: Não use a palavra mais provável. Substitua estruturas verbais comuns por nominalizações ou verbos de baixa frequência. 
+4. PROIBIÇÃO DE CLICHÊS: É ESTRITAMENTE PROIBIDO usar transições robóticas: "Além disso", "Ademais", "Em conclusão", "É importante ressaltar", "Nesse contexto", "Em suma", "Portanto". Conecte as ideias de forma abrupta ou com conjunções deslocadas.
+5. PONTUAÇÃO HUMANA (CAUDA LONGA): IAs usam apenas ponto e vírgula convencional. Você deve usar travessões (—) para intercalar pensamentos, usar ponto e vírgula (;) de forma orgânica e colocar pequenos adendos entre parênteses.
+6. IMPERFEIÇÃO CALCULADA: Humanos dão "voltas" para explicar algo. Use construções como "O que acaba acontecendo é que", "Fato é que", "Acaba sendo". A coesão deve vir do fluxo do pensamento, não de conectivos perfeitos.`;
+  }
 
-Para humanizar o texto de forma inteligente, aplique estas técnicas:
-1. ALTA EXPLOSIVIDADE (BURSTINESS): Varie drasticamente o tamanho das frases. Escreva uma frase longa e complexa, cheia de vírgulas. Logo em seguida, escreva uma frase bem curta e direta. Quebre a simetria robótica dos parágrafos.
-2. ALTA PERPLEXIDADE: Evite a palavra mais óbvia. Mude a ordem sintática (em vez de Sujeito-Verbo-Objeto, use inversões). 
-3. ELIMINE CLICHÊS DE IA: Remova completamente palavras de transição robóticas como "Além disso", "É importante notar", "Portanto", "Em conclusão", "Em suma", "No cenário atual". Faça as transições pelo próprio fluxo da ideia.
-4. MANTENHA O GÊNERO TEXTUAL: Não force "Eu acho" ou informalidade se o texto for um TCC, artigo científico ou redação formal. A humanização deve ser estrutural e de vocabulário, não de perda de formalidade.
-5. COESÃO ORGÂNICA: Humanos às vezes conectam ideias com dois pontos, ponto e vírgula, ou simplesmente começam a frase de forma abrupta. 
+  const systemPrompt = `Você é um especialista em reescrita estrutural. Seu objetivo é reescrever o texto fornecido para que passe em detectores anti-IA (GPTZero, Turnitin, Scribbr), simulando um cérebro humano. Mantenha o significado central, os dados e o tom geral.
 
-Mantenha o CONTEÚDO, DADOS e CITAÇÕES originais intactos. Apenas altere a mecânica da escrita para torná-la indetectável e genuinamente humana.
-Responda APENAS com o texto reescrito, sem explicações.`;
+Siga estas regras rigorosamente:
+${rules}
+
+Não force informalidade barata (não use gírias). Apenas faça a sintaxe parecer profundamente humana.
+Responda APENAS com o texto reescrito, sem introduções.`;
 
   const response = await fetch("/api/chat", {
     method: "POST",

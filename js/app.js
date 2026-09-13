@@ -128,9 +128,13 @@ runBtn.addEventListener('click', async () => {
   }
 });
 
+const rewriteLevel = document.getElementById('rewriteLevel');
+
 rewriteBtn.addEventListener('click', async () => {
   const text = textarea.value.trim();
   if(!text) return;
+
+  const level = rewriteLevel.value;
 
   rewriteBtn.disabled = true;
   const originalText = rewriteBtn.textContent;
@@ -138,7 +142,7 @@ rewriteBtn.addEventListener('click', async () => {
   rewriteBox.style.display = 'none';
 
   try {
-    const rewritten = await rewriteAsHuman(text);
+    const rewritten = await rewriteAsHuman(text, level);
     rewriteText.textContent = rewritten;
     rewriteBox.style.display = 'block';
   } catch(err) {
