@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Leitor de Indícios — Análise de Texto</title>
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/header.css">
+<link rel="stylesheet" href="css/form.css">
+<link rel="stylesheet" href="css/result.css">
+<link rel="stylesheet" href="css/ui.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Leitor de Indícios</h1>
+    <p>Cole o texto de um aluno para ver métricas objetivas de estilo, trechos marcados com indícios de IA e, se quiser, uma comparação com um texto anterior do mesmo aluno.</p>
+  </header>
+
+  <label class="field-label">TEXTO PARA ANÁLISE</label>
+  <textarea id="inputText" placeholder="Cole aqui o texto do aluno..."></textarea>
+  <div class="meta-row">
+    <span id="wordCount">0 palavras</span>
+    <span id="minWarning"></span>
+  </div>
+
+  <div style="margin-top:14px;">
+    <button class="ref-toggle" id="refToggle">+ comparar com um texto anterior do mesmo aluno</button>
+  </div>
+
+  <div class="ref-block" id="refBlock">
+    <label class="field-label">TEXTO DE REFERÊNCIA (algo que você sabe que o aluno escreveu — prova em sala, trabalho anterior)</label>
+    <textarea id="refText" placeholder="Cole aqui um texto anterior do aluno, de autoria confirmada..."></textarea>
+    <p class="ref-hint">Isso costuma ser mais confiável do que analisar um texto isolado: em vez de perguntar "isso parece IA?", a ferramenta pergunta "isso parece a mesma pessoa que escreveu o outro texto?".</p>
+  </div>
+
+  <div class="controls">
+    <button class="run" id="runBtn">Analisar texto</button>
+    <button class="clear" id="clearBtn">limpar</button>
+    <span class="status" id="statusText"></span>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="result" id="result">
+    <div class="verdict-row">
+      <span class="verdict-label">INDÍCIO GERAL</span>
+      <span class="verdict-tag" id="verdictTag">—</span>
+    </div>
+    <div class="use-banner" id="useBanner"></div>
+    <div class="summary-text" id="summaryText"></div>
+
+    <div class="section-title">MÉTRICAS DE ESTILO</div>
+    <p class="section-sub">Calculadas diretamente do texto, sem depender de IA. Servem como pistas complementares — nenhuma delas prova nada isoladamente.</p>
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div id="consistencySection" style="display:none;">
+      <div class="section-title">CONSISTÊNCIA COM O TEXTO DE REFERÊNCIA</div>
+      <div class="consistency-box" id="consistencyBox"></div>
+    </div>
+
+    <div class="section-title">TEXTO MARCADO</div>
+    <div class="legend">
+      <span><span class="swatch swatch-ia"></span> possível conteúdo gerado por IA</span>
+      <span><span class="swatch swatch-assist"></span> possível assistência de IA (revisão/polimento)</span>
+      <span><span class="swatch swatch-humano"></span> sinal de escrita humana</span>
+    </div>
+    <div class="annotated" id="annotatedText"></div>
+
+    <div class="section-title">POR QUE CADA TRECHO FOI MARCADO</div>
+    <ul class="notes-list" id="notesList"></ul>
+
+    <div class="section-title" style="margin-top:32px;">VERSÃO HUMANIZADA (FINS EDUCACIONAIS)</div>
+    <p class="section-sub">Reescreve o texto com marcas de escrita humana — variação de frases, imperfeições, voz pessoal. Use para mostrar aos alunos a diferença na prática.</p>
+    <button class="run rewrite-btn" id="rewriteBtn">Gerar versão humanizada</button>
+    <div class="rewrite-warning">⚠️ Apenas para fins didáticos. A versão gerada não deve ser entregue como trabalho.</div>
+    <div class="rewrite-box" id="rewriteBox" style="display:none;">
+      <div class="rewrite-header">
+        <div class="rewrite-label">VERSÃO REESCRITA</div>
+        <button class="copy-btn" id="copyRewriteBtn">Copiar</button>
+      </div>
+      <div class="rewrite-text" id="rewriteText"></div>
+    </div>
+
+    <div class="disclaimer">
+      <strong>Leia com cautela:</strong> tanto as métricas quanto as marcações são estimativas — não uma prova de autoria. A distinção entre "assistência" e "geração" também é uma estimativa, não um fato: a ferramenta pode confundir uma frase naturalmente bem escrita pelo aluno com assistência de IA, ou vice-versa. Textos muito formais, revisados por gramática, ou de alunos que escrevem em segunda língua podem apresentar métricas parecidas com as de texto gerado por IA, e o inverso também acontece. Use isto como um ponto de partida para conversar com o aluno, não como veredito final — principalmente antes de decidir tirar pontos.
+    </div>
+  </div>
+
+  <footer>leitor de indícios · análise assistida por IA · não constitui prova de autoria</footer>
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/stylometrics.js"></script>
+<script src="js/api.js"></script>
+<script src="js/render.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

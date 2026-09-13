@@ -1,0 +1,14 @@
+﻿{
+    "name":  "leitor-de-indicios",
+    "version":  "1.0.0",
+    "description":  "Analisador de textos com indícios de IA",
+    "main":  "server.js",
+    "scripts":  {
+                    "dev":  "node --watch server.js",
+                    "start":  "node server.js"
+                },
+    "dependencies":  {
+                         "express":  "^4.19.2"
+                     },
+    "type":  "module"
+}

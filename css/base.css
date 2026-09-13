@@ -1,0 +1,11 @@
+/* base.css — Reset e estilos de body e .wrap */
+
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--serif);
+  padding:32px 20px 60px;
+}
+.wrap{max-width:800px;margin:0 auto;}

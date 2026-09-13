@@ -1,0 +1,4 @@
+﻿# Ambiente e chaves — NUNCA commitar!
+.env
+config.js
+node_modules/

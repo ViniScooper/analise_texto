@@ -1,0 +1,21 @@
+/* variables.css — Variáveis CSS globais (:root) */
+
+:root{
+  --paper:#EDE7DA;
+  --ink:#2B2620;
+  --ink-soft:#6B6355;
+  --line:#C9BFA9;
+  --accent:#8A5A3B;
+  --accent-soft:#EFD9C4;
+  --flag-low:#5C7A5C;
+  --flag-mid:#B08A2E;
+  --flag-high:#A0442E;
+  --mark-ia-bg:#F3D9CC;
+  --mark-ia-border:#A0442E;
+  --mark-assist-bg:#E8DFC9;
+  --mark-assist-border:#B08A2E;
+  --mark-humano-bg:#DCE7D6;
+  --mark-humano-border:#5C7A5C;
+  --mono: "IBM Plex Mono", "Courier New", monospace;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}

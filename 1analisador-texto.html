@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Leitor de Indícios — Análise de Texto</title>
+<style>
+  :root{
+    --paper:#EDE7DA;
+    --ink:#2B2620;
+    --ink-soft:#6B6355;
+    --line:#C9BFA9;
+    --accent:#8A5A3B;
+    --accent-soft:#EFD9C4;
+    --flag-low:#5C7A5C;
+    --flag-mid:#B08A2E;
+    --flag-high:#A0442E;
+    --mark-ia-bg:#F3D9CC;
+    --mark-ia-border:#A0442E;
+    --mark-assist-bg:#E8DFC9;
+    --mark-assist-border:#B08A2E;
+    --mark-humano-bg:#DCE7D6;
+    --mark-humano-border:#5C7A5C;
+    --mono: "IBM Plex Mono", "Courier New", monospace;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--serif);
+    padding:32px 20px 60px;
+  }
+  .wrap{max-width:800px;margin:0 auto;}
+  header{
+    border-bottom:2px solid var(--ink);
+    padding-bottom:18px;
+    margin-bottom:28px;
+  }
+  header h1{
+    font-size:28px;
+    margin:0 0 6px;
+    font-weight:600;
+    letter-spacing:0.2px;
+  }
+  header p{
+    margin:0;
+    color:var(--ink-soft);
+    font-size:14.5px;
+    line-height:1.5;
+    max-width:600px;
+  }
+  .field-label{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  textarea{
+    width:100%;
+    min-height:220px;
+    background:#F7F4EC;
+    border:1.5px solid var(--line);
+    border-radius:3px;
+    padding:14px;
+    font-family:var(--serif);
+    font-size:15.5px;
+    line-height:1.6;
+    color:var(--ink);
+    resize:vertical;
+  }
+  textarea:focus{outline:none;border-color:var(--accent);}
+  .meta-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:8px;
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .ref-toggle{
+    background:none;
+    border:none;
+    color:var(--accent);
+    font-family:var(--mono);
+    font-size:12px;
+    cursor:pointer;
+    text-decoration:underline;
+    padding:0;
+  }
+  .ref-block{
+    margin-top:20px;
+    display:none;
+  }
+  .ref-block.show{display:block;}
+  .ref-block textarea{min-height:140px;}
+  .ref-hint{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin:6px 0 0;
+    line-height:1.5;
+  }
+  .controls{
+    margin-top:22px;
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  button.run{
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    padding:12px 22px;
+    font-family:var(--serif);
+    font-size:15px;
+    border-radius:3px;
+    cursor:pointer;
+    transition:background 0.15s ease;
+  }
+  button.run:hover{background:var(--accent);}
+  button.run:disabled{background:var(--line);cursor:not-allowed;}
+  button.clear{
+    background:none;
+    border:none;
+    color:var(--ink-soft);
+    font-family:var(--mono);
+    font-size:12.5px;
+    cursor:pointer;
+    text-decoration:underline;
+  }
+  .status{
+    font-family:var(--mono);
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  .error-box{
+    margin-top:20px;
+    padding:14px 16px;
+    background:#F4E3DE;
+    border-left:3px solid var(--flag-high);
+    font-size:14px;
+    color:#7A2E1D;
+    border-radius:2px;
+    display:none;
+  }
+  .error-box.show{display:block;}
+  .result{
+    margin-top:36px;
+    border-top:2px solid var(--ink);
+    padding-top:24px;
+    display:none;
+  }
+  .result.show{display:block;}
+  .verdict-row{
+    display:flex;
+    align-items:baseline;
+    gap:16px;
+    margin-bottom:10px;
+    flex-wrap:wrap;
+  }
+  .verdict-label{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .verdict-tag{
+    font-family:var(--mono);
+    font-size:13px;
+    padding:4px 10px;
+    border-radius:2px;
+    border:1.5px solid currentColor;
+  }
+  .tag-low{color:var(--flag-low);}
+  .tag-mid{color:var(--flag-mid);}
+  .tag-high{color:var(--flag-high);}
+  .summary-text{
+    font-size:15.5px;
+    line-height:1.6;
+    color:var(--ink);
+    margin:12px 0 8px;
+  }
+  .section-title{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-soft);
+    margin:28px 0 10px;
+  }
+  .section-sub{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin:-4px 0 14px;
+    line-height:1.5;
+  }
+  .stats-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+    gap:1px;
+    background:var(--line);
+    border:1.5px solid var(--line);
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .stat-cell{
+    background:#F7F4EC;
+    padding:14px 16px;
+  }
+  .stat-cell .stat-label{
+    font-family:var(--mono);
+    font-size:10.5px;
+    color:var(--ink-soft);
+    display:block;
+    margin-bottom:5px;
+  }
+  .stat-cell .stat-value{
+    font-size:20px;
+    color:var(--ink);
+  }
+  .stat-cell .stat-note{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-top:3px;
+    display:block;
+  }
+  .stat-flag-mid .stat-value{color:var(--flag-mid);}
+  .stat-flag-high .stat-value{color:var(--flag-high);}
+  .legend{
+    display:flex;
+    gap:18px;
+    flex-wrap:wrap;
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-bottom:14px;
+  }
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .legend .swatch{width:11px;height:11px;border-radius:2px;display:inline-block;}
+  .swatch-ia{background:var(--mark-ia-bg);border:1.5px solid var(--mark-ia-border);}
+  .swatch-assist{background:var(--mark-assist-bg);border:1.5px solid var(--mark-assist-border);}
+  .swatch-humano{background:var(--mark-humano-bg);border:1.5px solid var(--mark-humano-border);}
+  .annotated{
+    background:#F7F4EC;
+    border:1.5px solid var(--line);
+    border-radius:3px;
+    padding:18px 20px;
+    font-size:15.5px;
+    line-height:1.85;
+    white-space:pre-wrap;
+  }
+  mark.ia{background:var(--mark-ia-bg);border-bottom:2px solid var(--mark-ia-border);padding:1px 2px;cursor:help;}
+  mark.assistencia{background:var(--mark-assist-bg);border-bottom:2px solid var(--mark-assist-border);padding:1px 2px;cursor:help;}
+  mark.humano{background:var(--mark-humano-bg);border-bottom:2px solid var(--mark-humano-border);padding:1px 2px;cursor:help;}
+  .notes-list{list-style:none;margin:14px 0 0;padding:0;}
+  .notes-list li{padding:11px 0;border-bottom:1px solid var(--line);font-size:14.5px;line-height:1.55;}
+  .notes-list li:last-child{border-bottom:none;}
+  .notes-list .num{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-right:8px;}
+  .notes-list .quote{font-style:italic;color:var(--ink-soft);display:block;margin-bottom:3px;}
+  .quote.ia-quote{border-left:2px solid var(--mark-ia-border);padding-left:8px;}
+  .quote.assistencia-quote{border-left:2px solid var(--mark-assist-border);padding-left:8px;}
+  .quote.humano-quote{border-left:2px solid var(--mark-humano-border);padding-left:8px;}
+  .use-banner{
+    display:inline-block;
+    font-family:var(--mono);
+    font-size:12.5px;
+    padding:6px 12px;
+    border-radius:2px;
+    margin:10px 0 18px;
+    border:1.5px solid currentColor;
+  }
+  .use-ok{color:var(--flag-low);}
+  .use-attn{color:var(--flag-mid);}
+  .use-concern{color:var(--flag-high);}
+  .consistency-box{
+    background:#F7F4EC;
+    border:1.5px solid var(--line);
+    border-radius:3px;
+    padding:16px 18px;
+    font-size:14.5px;
+    line-height:1.6;
+  }
+  .disclaimer{
+    margin-top:30px;
+    padding:14px 16px;
+    background:var(--accent-soft);
+    border-left:3px solid var(--accent);
+    font-size:13.5px;
+    line-height:1.6;
+    color:#5A4432;
+    border-radius:2px;
+  }
+  footer{
+    margin-top:50px;
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--ink-soft);
+    border-top:1px solid var(--line);
+    padding-top:14px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Leitor de Indícios</h1>
+    <p>Cole o texto de um aluno para ver métricas objetivas de estilo, trechos marcados com indícios de IA e, se quiser, uma comparação com um texto anterior do mesmo aluno.</p>
+  </header>
+
+  <label class="field-label">TEXTO PARA ANÁLISE</label>
+  <textarea id="inputText" placeholder="Cole aqui o texto do aluno..."></textarea>
+  <div class="meta-row">
+    <span id="wordCount">0 palavras</span>
+    <span id="minWarning"></span>
+  </div>
+
+  <div style="margin-top:14px;">
+    <button class="ref-toggle" id="refToggle">+ comparar com um texto anterior do mesmo aluno</button>
+  </div>
+
+  <div class="ref-block" id="refBlock">
+    <label class="field-label">TEXTO DE REFERÊNCIA (algo que você sabe que o aluno escreveu — prova em sala, trabalho anterior)</label>
+    <textarea id="refText" placeholder="Cole aqui um texto anterior do aluno, de autoria confirmada..."></textarea>
+    <p class="ref-hint">Isso costuma ser mais confiável do que analisar um texto isolado: em vez de perguntar "isso parece IA?", a ferramenta pergunta "isso parece a mesma pessoa que escreveu o outro texto?".</p>
+  </div>
+
+  <div class="controls">
+    <button class="run" id="runBtn">Analisar texto</button>
+    <button class="clear" id="clearBtn">limpar</button>
+    <span class="status" id="statusText"></span>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="result" id="result">
+    <div class="verdict-row">
+      <span class="verdict-label">INDÍCIO GERAL</span>
+      <span class="verdict-tag" id="verdictTag">—</span>
+    </div>
+    <div class="use-banner" id="useBanner"></div>
+    <div class="summary-text" id="summaryText"></div>
+
+    <div class="section-title">MÉTRICAS DE ESTILO</div>
+    <p class="section-sub">Calculadas diretamente do texto, sem depender de IA. Servem como pistas complementares — nenhuma delas prova nada isoladamente.</p>
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div id="consistencySection" style="display:none;">
+      <div class="section-title">CONSISTÊNCIA COM O TEXTO DE REFERÊNCIA</div>
+      <div class="consistency-box" id="consistencyBox"></div>
+    </div>
+
+    <div class="section-title">TEXTO MARCADO</div>
+    <div class="legend">
+      <span><span class="swatch swatch-ia"></span> possível conteúdo gerado por IA</span>
+      <span><span class="swatch swatch-assist"></span> possível assistência de IA (revisão/polimento)</span>
+      <span><span class="swatch swatch-humano"></span> sinal de escrita humana</span>
+    </div>
+    <div class="annotated" id="annotatedText"></div>
+
+    <div class="section-title">POR QUE CADA TRECHO FOI MARCADO</div>
+    <ul class="notes-list" id="notesList"></ul>
+
+    <div class="disclaimer">
+      <strong>Leia com cautela:</strong> tanto as métricas quanto as marcações são estimativas — não uma prova de autoria. A distinção entre "assistência" e "geração" também é uma estimativa, não um fato: a ferramenta pode confundir uma frase naturalmente bem escrita pelo aluno com assistência de IA, ou vice-versa. Textos muito formais, revisados por gramática, ou de alunos que escrevem em segunda língua podem apresentar métricas parecidas com as de texto gerado por IA, e o inverso também acontece. Use isto como um ponto de partida para conversar com o aluno, não como veredito final — principalmente antes de decidir tirar pontos.
+    </div>
+  </div>
+
+  <footer>leitor de indícios · análise assistida por IA · não constitui prova de autoria</footer>
+</div>
+
+<script>
+const textarea = document.getElementById('inputText');
+const wordCount = document.getElementById('wordCount');
+const minWarning = document.getElementById('minWarning');
+const runBtn = document.getElementById('runBtn');
+const clearBtn = document.getElementById('clearBtn');
+const statusText = document.getElementById('statusText');
+const result = document.getElementById('result');
+const errorBox = document.getElementById('errorBox');
+const verdictTag = document.getElementById('verdictTag');
+const summaryText = document.getElementById('summaryText');
+const annotatedText = document.getElementById('annotatedText');
+const notesList = document.getElementById('notesList');
+const statsGrid = document.getElementById('statsGrid');
+const refToggle = document.getElementById('refToggle');
+const refBlock = document.getElementById('refBlock');
+const refText = document.getElementById('refText');
+const consistencySection = document.getElementById('consistencySection');
+const consistencyBox = document.getElementById('consistencyBox');
+const useBanner = document.getElementById('useBanner');
+
+function countWords(t){
+  return t.trim().length ? t.trim().split(/\s+/).length : 0;
+}
+
+textarea.addEventListener('input', () => {
+  const n = countWords(textarea.value);
+  wordCount.textContent = n + (n === 1 ? ' palavra' : ' palavras');
+  minWarning.textContent = n > 0 && n < 80 ? 'recomenda-se pelo menos ~80 palavras para uma análise confiável' : '';
+});
+
+refToggle.addEventListener('click', () => {
+  const showing = refBlock.classList.toggle('show');
+  refToggle.textContent = showing ? '− ocultar comparação' : '+ comparar com um texto anterior do mesmo aluno';
+});
+
+clearBtn.addEventListener('click', () => {
+  textarea.value = '';
+  refText.value = '';
+  wordCount.textContent = '0 palavras';
+  minWarning.textContent = '';
+  result.classList.remove('show');
+  errorBox.classList.remove('show');
+});
+
+function useBannerInfo(classificacao){
+  if(classificacao === 'geracao_provavel') return {cls:'use-concern', text:'Possível geração de conteúdo por IA — vale conversar com o aluno'};
+  if(classificacao === 'assistencia_provavel') return {cls:'use-attn', text:'Padrão de assistência de IA (revisão/polimento) — ideias parecem do aluno'};
+  return {cls:'use-ok', text:'Sem indícios relevantes de envolvimento de IA'};
+}
+
+function tagClassFor(level){
+  if(level === 'alto') return 'tag-high';
+  if(level === 'medio' || level === 'médio') return 'tag-mid';
+  return 'tag-low';
+}
+function tagLabelFor(level){
+  if(level === 'alto') return 'INDÍCIOS FORTES';
+  if(level === 'medio' || level === 'médio') return 'INDÍCIOS MODERADOS';
+  return 'POUCOS INDÍCIOS';
+}
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ---- Local stylometric analysis (no API call, fully deterministic) ----
+function splitSentences(text){
+  return text
+    .replace(/\s+/g,' ')
+    .trim()
+    .split(/(?<=[.!?…])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÀ0-9"“(])/)
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
+}
+
+function tokenizeWords(text){
+  return (text.toLowerCase().match(/[a-zà-ÿ0-9]+(?:['’][a-zà-ÿ]+)?/gi) || []);
+}
+
+function computeStylometrics(text){
+  const sentences = splitSentences(text);
+  const words = tokenizeWords(text);
+  const wordCountN = words.length;
+  const sentCountN = sentences.length || 1;
+
+  const sentLengths = sentences.map(s => tokenizeWords(s).length).filter(n => n > 0);
+  const avgSentLen = sentLengths.reduce((a,b)=>a+b,0) / (sentLengths.length || 1);
+  const variance = sentLengths.reduce((a,b)=>a + Math.pow(b-avgSentLen,2), 0) / (sentLengths.length || 1);
+  const stdDev = Math.sqrt(variance);
+  // burstiness-like coefficient of variation
+  const cv = avgSentLen > 0 ? (stdDev / avgSentLen) : 0;
+
+  const uniqueWords = new Set(words);
+  const ttr = wordCountN > 0 ? uniqueWords.size / wordCountN : 0;
+
+  const avgWordLen = wordCountN > 0 ? words.reduce((a,w)=>a+w.length,0) / wordCountN : 0;
+
+  return {
+    wordCount: wordCountN,
+    sentCount: sentCountN,
+    avgSentLen,
+    stdDevSentLen: stdDev,
+    cv,
+    ttr,
+    avgWordLen
+  };
+}
+
+function cvNote(cv){
+  if(cv < 0.35) return {note:'baixa variação — sinal possível de IA', flag:'stat-flag-mid'};
+  if(cv < 0.5) return {note:'variação moderada', flag:''};
+  return {note:'alta variação — típico de escrita humana', flag:''};
+}
+function ttrNote(ttr){
+  if(ttr > 0.75) return {note:'vocabulário bem variado', flag:''};
+  if(ttr > 0.55) return {note:'variação moderada', flag:''};
+  return {note:'vocabulário repetitivo', flag:'stat-flag-mid'};
+}
+
+function renderStats(stats){
+  const cvInfo = cvNote(stats.cv);
+  const ttrInfo = ttrNote(stats.ttr);
+  const cells = [
+    {label:'PALAVRAS', value: stats.wordCount, note:''},
+    {label:'FRASES', value: stats.sentCount, note:''},
+    {label:'TAMANHO MÉDIO DE FRASE', value: stats.avgSentLen.toFixed(1) + ' palavras', note:''},
+    {label:'VARIAÇÃO ENTRE FRASES', value: stats.cv.toFixed(2), note: cvInfo.note, flag: cvInfo.flag},
+    {label:'DIVERSIDADE DE VOCABULÁRIO', value: (stats.ttr*100).toFixed(0) + '%', note: ttrInfo.note, flag: ttrInfo.flag},
+    {label:'TAMANHO MÉDIO DE PALAVRA', value: stats.avgWordLen.toFixed(1) + ' letras', note:''}
+  ];
+  statsGrid.innerHTML = cells.map(c => `
+    <div class="stat-cell ${c.flag || ''}">
+      <span class="stat-label">${c.label}</span>
+      <span class="stat-value">${c.value}</span>
+      ${c.note ? `<span class="stat-note">${c.note}</span>` : ''}
+    </div>
+  `).join('');
+}
+
+async function callClaude(systemPrompt, userContent, maxTokens){
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: maxTokens,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userContent }]
+    })
+  });
+  if(!response.ok) throw new Error("Falha na chamada à API (status " + response.status + ")");
+  const data = await response.json();
+  const textBlock = data.content.find(b => b.type === "text");
+  if(!textBlock) throw new Error("Resposta inesperada da API.");
+  let clean = textBlock.text.trim().replace(/^```json/i, "").replace(/^```/, "").replace(/```$/, "").trim();
+  try{
+    return JSON.parse(clean);
+  } catch(e){
+    throw new Error("Não foi possível interpretar a resposta da análise.");
+  }
+}
+
+async function analyzeText(text, stats){
+  const systemPrompt = `Você é um assistente que ajuda professores a identificar QUALITATIVAMENTE trechos de um texto de aluno que apresentam indícios de envolvimento de IA. Você NÃO é um detector confiável e deve manter uma postura cautelosa e criteriosa.
+
+DISTINÇÃO CENTRAL — a mais importante deste trabalho: nem todo uso de IA é equivalente. Um aluno que usa IA para revisar gramática, melhorar a fluidez de frases que ele mesmo escreveu, ou reorganizar um parágrafo já pensado por ele está se beneficiando de uma ferramenta legítima de apoio — isso não deveria ser tratado como cola. Já um trecho cujo CONTEÚDO (as ideias, os argumentos, os exemplos) parece ter sido gerado pela IA, e não apenas seu texto polido, é uma situação diferente e mais preocupante. Sua tarefa é ajudar o professor a distinguir essas duas situações, não tratá-las como a mesma coisa.
+
+Use três categorias de marcação:
+- "geracao": o CONTEÚDO do trecho (ideia, argumento, análise, exemplo) parece ter sido criado pela IA, não apenas o texto. Ex: um argumento genérico e "de manual" que não parece vir de alguém pensando sobre o tema específico da tarefa.
+- "assistencia": o trecho parece ter sido revisado, reformulado ou polido por IA a partir de uma ideia que plausivelmente já era do aluno — a estrutura de pensamento parece pessoal, mas a redação está artificialmente "lisa" (vocabulário raro para o nível do aluno, transições longe do resto do texto, frase isolada com fluência muito acima do restante).
+- "humano": sinal claro de escrita humana genuína (opinião específica, digressão, imperfeição genuína, referência pessoal concreta).
+
+Para decidir entre "geracao" e "assistencia", pergunte-se: esse trecho parece um pensamento genérico que qualquer aluno de qualquer turma poderia ter recebido pronto (geração), ou parece uma ideia específica ao contexto da tarefa/aluno só que com a redação mais polida que o resto do texto (assistência)? Na dúvida entre as duas, prefira "assistencia" — o ônus da dúvida deve favorecer não penalizar o aluno.
+
+Você recebeu também métricas estilométricas já calculadas do texto (variação no tamanho das frases e diversidade de vocabulário). Use-as como contexto adicional, mas não como única base — métricas sozinhas não são conclusivas.
+
+Responda APENAS com um objeto JSON válido, sem markdown, sem texto antes ou depois, no formato exato:
+{
+  "nivel": "baixo" | "medio" | "alto",
+  "classificacao_uso": "sem_indicios" | "assistencia_provavel" | "geracao_provavel",
+  "resumo": "parágrafo curto (2-3 frases) com o parecer geral, cauteloso, explicando a natureza predominante do uso (assistência vs. geração) e mencionando brevemente se as métricas reforçam ou contradizem os indícios qualitativos",
+  "marcacoes": [
+    {
+      "trecho": "cópia EXATA de um trecho contínuo do texto original, palavra por palavra, sem alterar nada",
+      "tipo": "geracao" | "assistencia" | "humano",
+      "motivo": "explicação curta e específica de por que esse trecho foi marcado nessa categoria"
+    }
+  ]
+}
+
+Regras: "trecho" deve ser cópia literal exata (para localização por busca de texto). Marque de 3 a 10 trechos. Inclua pelo menos 1 "humano" se houver qualquer sinal, mesmo fraco. "classificacao_uso" deve refletir o padrão predominante: se a maioria das marcações de IA forem "assistencia", use "assistencia_provavel"; se houver marcações claras de "geracao", use "geracao_provavel"; se não houver marcações de IA relevantes, use "sem_indicios". Não marque o texto inteiro. Trechos não devem se sobrepor.`;
+
+  const statsContext = `Métricas já calculadas deste texto: variação entre frases (coeficiente de variação) = ${stats.cv.toFixed(2)} (valores abaixo de 0.35 tendem a indicar uniformidade suspeita); diversidade de vocabulário = ${(stats.ttr*100).toFixed(0)}% de palavras únicas; ${stats.sentCount} frases, ${stats.wordCount} palavras.`;
+
+  return callClaude(systemPrompt, `${statsContext}\n\nAnalise o texto abaixo e marque os trechos relevantes:\n\n"""${text}"""`, 1800);
+}
+
+async function compareWithReference(text, reference){
+  const systemPrompt = `Você compara dois textos para avaliar se parecem ter sido escritos pela mesma pessoa, no mesmo estilo natural. O primeiro é o texto em avaliação; o segundo é uma amostra de referência de autoria confirmada do mesmo aluno. Avalie consistência de vocabulário, complexidade sintática, tom, tipo de erro (ou ausência de erros) e voz pessoal. Uma mudança brusca de estilo entre os dois é um sinal relevante — mais relevante, geralmente, do que analisar um texto isolado.
+
+Responda APENAS com um objeto JSON válido, sem markdown, no formato exato:
+{
+  "consistente": true | false,
+  "explicacao": "parágrafo curto (2-4 frases) explicando se o estilo é consistente entre os dois textos e por quê, citando diferenças ou semelhanças concretas"
+}`;
+
+  return callClaude(systemPrompt, `TEXTO EM AVALIAÇÃO:\n"""${text}"""\n\nTEXTO DE REFERÊNCIA (autoria confirmada):\n"""${reference}"""`, 700);
+}
+
+function renderAnnotated(originalText, marcacoes){
+  const found = [];
+  const usedRanges = [];
+  marcacoes.forEach((m) => {
+    if(!m.trecho) return;
+    const searchStr = m.trecho.trim();
+    if(!searchStr) return;
+    let startIdx = originalText.indexOf(searchStr);
+    while(startIdx !== -1 && usedRanges.some(r => startIdx < r.end && startIdx + searchStr.length > r.start)){
+      startIdx = originalText.indexOf(searchStr, startIdx + 1);
+    }
+    if(startIdx !== -1){
+      const range = {start: startIdx, end: startIdx + searchStr.length, tipo: m.tipo, motivo: m.motivo, trecho: searchStr};
+      usedRanges.push(range);
+      found.push(range);
+    }
+  });
+  found.sort((a,b) => a.start - b.start);
+
+  let html = '';
+  let cursor = 0;
+  let noteCounter = 1;
+  const noteMap = [];
+  found.forEach(range => {
+    if(range.start > cursor) html += escapeHtml(originalText.slice(cursor, range.start));
+    const cls = range.tipo === 'geracao' ? 'ia' : (range.tipo === 'assistencia' ? 'assistencia' : 'humano');
+    html += `<mark class="${cls}" title="${escapeHtml(range.motivo || '')}">${escapeHtml(originalText.slice(range.start, range.end))}</mark>`;
+    noteMap.push({num: noteCounter, tipo: range.tipo, motivo: range.motivo, trecho: range.trecho});
+    noteCounter++;
+    cursor = range.end;
+  });
+  if(cursor < originalText.length) html += escapeHtml(originalText.slice(cursor));
+  return { html, noteMap };
+}
+
+runBtn.addEventListener('click', async () => {
+  const text = textarea.value.trim();
+  const reference = refBlock.classList.contains('show') ? refText.value.trim() : '';
+  errorBox.classList.remove('show');
+  result.classList.remove('show');
+
+  if(countWords(text) < 20){
+    errorBox.textContent = "Cole um texto com pelo menos algumas frases para analisar.";
+    errorBox.classList.add('show');
+    return;
+  }
+
+  runBtn.disabled = true;
+  statusText.textContent = "calculando métricas...";
+
+  try{
+    const stats = computeStylometrics(text);
+    renderStats(stats);
+
+    statusText.textContent = "analisando com IA...";
+    const analysis = await analyzeText(text, stats);
+
+    verdictTag.textContent = tagLabelFor(analysis.nivel);
+    verdictTag.className = "verdict-tag " + tagClassFor(analysis.nivel);
+    const bannerInfo = useBannerInfo(analysis.classificacao_uso);
+    useBanner.textContent = bannerInfo.text;
+    useBanner.className = "use-banner " + bannerInfo.cls;
+    summaryText.textContent = analysis.resumo || "";
+
+    const { html, noteMap } = renderAnnotated(text, analysis.marcacoes || []);
+    annotatedText.innerHTML = html || escapeHtml(text);
+
+    notesList.innerHTML = "";
+    noteMap.forEach(note => {
+      const li = document.createElement('li');
+      const quoteClass = note.tipo === 'geracao' ? 'ia-quote' : (note.tipo === 'assistencia' ? 'assistencia-quote' : 'humano-quote');
+      const tipoLabel = note.tipo === 'geracao' ? 'possível geração' : (note.tipo === 'assistencia' ? 'possível assistência' : 'sinal humano');
+      li.innerHTML = `<span class="num">${note.num} · ${tipoLabel}</span>` +
+        `<span class="quote ${quoteClass}">"${escapeHtml(note.trecho)}"</span>` +
+        `<span>${escapeHtml(note.motivo || '')}</span>`;
+      notesList.appendChild(li);
+    });
+    if(noteMap.length === 0){
+      const li = document.createElement('li');
+      li.textContent = "Nenhum trecho específico foi destacado nesta análise.";
+      notesList.appendChild(li);
+    }
+
+    if(reference && countWords(reference) >= 20){
+      statusText.textContent = "comparando com o texto de referência...";
+      const comparison = await compareWithReference(text, reference);
+      consistencySection.style.display = 'block';
+      consistencyBox.innerHTML = `<strong>${comparison.consistente ? 'Estilo consistente' : 'Possível mudança de estilo'}</strong><br><br>${escapeHtml(comparison.explicacao || '')}`;
+    } else {
+      consistencySection.style.display = 'none';
+    }
+
+    result.classList.add('show');
+    statusText.textContent = "";
+  } catch(err){
+    errorBox.textContent = "Erro ao analisar: " + err.message;
+    errorBox.classList.add('show');
+    statusText.textContent = "";
+  } finally {
+    runBtn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
